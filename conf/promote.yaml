@@ -1,0 +1,13 @@
+defaults:
+  - config  # reuse mlflow config
+  - _self_
+
+promote:
+  run_dir: ???  # mandatory: the training run dir to promote
+  name: malnutrition_risk
+  alias: champion   # @champion / @challenger
+
+hydra:
+  run:
+    dir: ${promote.run_dir}/promotions/${now:%Y-%m-%d_%H-%M-%S}
+

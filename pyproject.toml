@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "malnutrition_risk"
+version = "0.1.0"
+dependencies = [
+    "hydra-core",
+    "mlflow>=3,<4",
+    "optuna",
+    "pandas",
+    "scikit-learn",
+    "lightgbm",
+    "pyarrow",
+    "shap",
+    "matplotlib",
+]
+[project.optional-dependencies]
+postgres = ["psycopg2-binary"]
+
+[tool.setuptools.packages.find]
+where = ["src"]

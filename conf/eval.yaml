@@ -1,0 +1,16 @@
+defaults:
+  - config
+  - _self_
+
+eval:
+  run_dir: ???
+  model_uri: null       # optional: evaluate a registry model (models:/…@champion) instead of run_dir/model.skops
+  beta: 2.0             # F-beta used for threshold selection
+  explain: true         # toggle SHAP
+  shap_n_features: 20   # least value shap features
+  strict: False         # if True and shap fails, terminate the run immediately (for local development)
+
+hydra:
+  run:
+    dir: ${eval.run_dir}/evaluations/${now:%Y-%m-%d_%H-%M-%S}
+

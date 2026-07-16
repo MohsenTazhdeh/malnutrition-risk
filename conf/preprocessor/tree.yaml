@@ -1,0 +1,19 @@
+_target_: sklearn.compose.ColumnTransformer
+remainder: passthrough
+verbose_feature_names_out: False
+
+transformers:
+  # convert province and city to proper categorical dtype
+  - - convert_to_categorical
+    - _target_: malnutrition_risk.features.ToCategory
+    - ${dataset.schema.geo_cols}
+
+  # drop highly correlated columns (TripCountNonAirNonPilgrimage_95to99)
+  - - drop_high_corr_cols
+    - drop
+    - ${dataset.schema.high_corr_cols}
+
+  # drop meta-data columns (id, Parent_Id, has_label)
+  - - drop_metadata_cols
+    - drop
+    - ${dataset.schema.metadata_cols}

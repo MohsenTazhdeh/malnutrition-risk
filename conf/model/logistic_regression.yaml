@@ -1,0 +1,14 @@
+name: logistic_regression           # must match optimizer's dispatch key in optimizing.py
+_target_: sklearn.linear_model.LogisticRegression
+
+# --- core ---
+penalty: l2
+C: 1.0
+solver: lbfgs
+max_iter: 1000
+
+# --- imbalance handling ---
+class_weight: balanced
+
+random_state: ${seed}
+n_jobs: ${training.n_jobs}

@@ -1,0 +1,33 @@
+defaults:
+  - /search_space: lightgbm
+
+name: lightgbm
+_target_: lightgbm.LGBMClassifier
+
+# --- Core Parameters ---
+boosting_type: gbdt  # alternative: dart
+verbose: -1
+objective: binary
+n_estimators: 100
+learning_rate: 0.05
+num_leaves: 31
+max_depth: 5
+
+# --- High-Cardinality Categorical Handling ---
+max_bin: 1024              # Fixes "more bins than configured" warning
+max_cat_threshold: 64      # Allows better splits on many categories
+min_data_per_group: 50     # Prevents overfitting on rare categories
+
+# --- Regularization & Control ---
+min_child_samples: 20
+min_split_gain: 0.01       # Tells LGBM to only split if it makes a meaningful improvement
+subsample: 0.8
+colsample_bytree: 0.8
+reg_alpha: 0.0  # $L_1$ regularization
+reg_lambda: 0.0 # $L_2$ regularization
+
+# --- Dynamic Overrides ---
+random_state: ${seed}
+scale_pos_weight: ${dataset.class_balance.scale_pos_weight}
+n_jobs: ${training.n_jobs}
+

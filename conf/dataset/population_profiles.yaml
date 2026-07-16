@@ -1,0 +1,121 @@
+name: population_profile_2pct
+target: Has_SoeTaghzie        # آیا سو تغذیه دارد
+group: Parent_Id
+
+paths:
+  # 1. Raw
+  raw: data/00_raw/population_profiles_1402.parquet
+
+  # 2. Curated
+  curated: data/01_curated/curated_population_profiles.parquet
+
+  # 3. Split
+  train: data/01_curated/train.parquet
+  val: data/01_curated/validation.parquet
+  test: data/01_curated/test.parquet
+
+  reference_data:
+    cpi_urban: data/00_raw/urban_household_yearly_CPI_per_province.csv
+    cpi_rural: data/00_raw/rural_household_yearly_CPI_per_province.csv
+
+class_balance:
+  pose_rate: 0.072
+  scale_pos_weight: 13.0  # 92.8% / 7.2%    # Cost-Sensitive Learning
+
+schema:
+  id_cols:
+    - id                                   # شناسه
+    - Parent_Id                            # شناسه سرپرست
+
+  postal_code_col: postal_code              # 7 رقم ابتدای کد پستی
+
+  geo_cols:
+    - SabteAhval_countyname                # شهرستان
+    - SabteAhval_provincename              # استان
+
+  categorical_cols:
+    - GenderId                             # جنسیت
+    - isurban                              # شهری/روستایی
+    - Has_Saham_Edalat                     # دارای سهام عدالت
+    - HasMojavezSenfi                      # دارای مجوز صنفی
+    - ISBimarKhas                          # آیا بیماری خاص دارد؟
+    - IsMalool                             # آیا معلولیت دارد؟
+    - Malool_shedat                        # شدت معلولیت
+    - IsBehzisti_AfzayeshMostamari         # آیا تحت پوشش بهزیستی است؟
+    - IsKomite_AfzayeshMostamari           # آیا تحت پوشش کمیته امداداست؟
+    - IsKomite_AfzayeshMostamariSayer      # آیا تحت پوشش کمیته امداداست؟
+    - is_bime_darman                       # دارای بیمه درمان
+    - IsBimePardaz                         # بیمه پرداز
+    - ISKarmanddolat_1402                  # کارمند دولت
+    - IsRetired_Asli                       # بازنشسته اصلی
+    - IsRetired_Tabaie                     # بازنشسته تبعی
+
+  numeric_cols:
+    - Age                                  # سن
+    - Decile                               # دهک رفاهی
+    - Percentile                           # صدک رفاهی
+    - TripCountAirNonPilgrimage_95to99     # تعداد سفر های هوایی غیر زیارتی از 95 الی 99
+    - TripCountAirPilgrimage_95to99        # تعداد سفر های هوایی زیارتی از 95 تا99
+    - TripCountNonAirNonPilgrimage_95to99  # تعداد سفر های غیر زیارتی غیر هوایی 95 الی 99
+    - TripCountNonAirPilgrimage_95to99     # تعداد سفر های غیر هوایی زیارتی 95 الی 99
+    - CardPerMonth_1398                    # خرید کارت ماهانه سال 1398 (ریال)
+    - CardPerMonth_1399                    # خرید کارت ماهانه سال 1399 (ریال)
+    - CardPerMonth_1400                    # خرید کارت ماهانه سال 1400 (ریال)
+    - CardPerMonth_1401                    # خرید کارت ماهانه سال 1401 (ریال)
+    - CardPerMonth_1402                    # خرید کارت ماهانه سال 1402 (ریال)
+    - CardBeCardPerMonth_1401              # گردش حساب-کارت به کارت ماهانه 1401 (ریال)
+    - CardBeCardPerMonth_1402              # گردش حساب-کارت به کارت ماهانه 1402 (ریال)
+    - PayaPerMonth_1401                    # گردش حساب-پایا ماهیانه 1401 (ریال)
+    - PayaPerMonth_1402                    # گردش حساب-پایا ماهیانه 1402 (ریال)
+    - SatnaPerMonth_1401                   # گردش حساب-ساتنا ماهیانه 1401 (ریال)
+    - SatnaPerMonth_1402                   # گردش حساب-ساتنا ماهیانه 1402 (ریال)
+    - CarsCount                            # تعداد خودرو
+    - CarsPrice                            # ارزش خودرو (ریال)
+    - Daramad                              # مجموع درآمد های ثبتی (ریال)
+    - Bourse_NetPortfoValue                # ارزش پورتفوی بورسی (ریال)
+    - Variz_1400                           # واریز سال 1400 (ریال)
+    - MandehAkhar_1399                     # مانده انتهای سال 1399 (ریال)
+    - MandehAkhar_1400                     # مانده انتهای سال 1400 (ریال)
+    - MandehAval_1399                      # مانده ابتدای سال 1399 (ریال)
+    - MandehAval_1400                      # مانده ابتدای سال 1400 (ریال)
+
+  log_transform_cols:
+    - cpi_adj_CardPerMonth_1398
+    - cpi_adj_CardPerMonth_1399
+    - cpi_adj_CardPerMonth_1400
+    - cpi_adj_CardPerMonth_1401
+    - cpi_adj_CardPerMonth_1402
+    - CardBeCardPerMonth_1401
+    - CardBeCardPerMonth_1402
+    - PayaPerMonth_1401
+    - PayaPerMonth_1402
+    - SatnaPerMonth_1401
+    - SatnaPerMonth_1402
+    - CarsPrice
+    - Daramad
+    - Bourse_NetPortfoValue
+    - Variz_1400
+    - MandehAkhar_1399
+    - MandehAkhar_1400
+    - MandehAval_1399
+    - MandehAval_1400
+
+  metadata_cols:
+    - id
+    - Parent_Id
+    - has_label
+
+  card_cols: [ CardPerMonth_1398, CardPerMonth_1399, CardPerMonth_1400, CardPerMonth_1401, CardPerMonth_1402 ]
+
+  high_corr_cols:
+#    - ISBimarKhas                         # low shap value
+#    - IsRetired_Tabaie                    # low shap value
+#    - IsKomite_AfzayeshMostamariSayer     # low shap value
+#    - CarsCount                           # low shap value
+#    - ISKarmanddolat_1402                 # low shap value
+#    - HasMojavezSenfi                     # low shap value
+#    - CarsPrice                           # low shap value
+    - TripCountNonAirNonPilgrimage_95to99 # high correlation to TripCountNonAirPilgrimage_95to99
+#    - Percentile                          # high correlation to Decile
+#    - MandehAval_1400                     # high correlation to MandehAkhar_1399
+#    - SabteAhval_provincename             # high correlation ot postal_code and SabteAhval_countyname

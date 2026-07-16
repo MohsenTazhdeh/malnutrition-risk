@@ -1,0 +1,26 @@
+curation:
+  target: ${dataset.target}
+  group: ${dataset.group}
+  cate_cols:
+    - SabteAhval_provincename
+    - SabteAhval_countyname
+
+  no_nan_cols:
+    - ISBimarKhas
+    - IsMalool
+    - Malool_shedat
+    - IsBehzisti_AfzayeshMostamari
+    - IsKomite_AfzayeshMostamari
+    - IsKomite_AfzayeshMostamariSayer
+    - Has_Saham_Edalat
+    - IsRetired_Asli
+    - IsRetired_Tabaie
+    - is_bime_darman
+    - IsBimePardaz
+
+splitting:
+  target: ${dataset.target}
+  group: ${dataset.group}
+  test_size: 0.2
+  val_size: 0.2
+  random_state: ${seed}

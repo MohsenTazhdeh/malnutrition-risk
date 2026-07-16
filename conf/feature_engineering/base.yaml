@@ -1,0 +1,34 @@
+_target_: sklearn.pipeline.Pipeline
+steps:
+  # Custom Transformer to standardize missing values
+  - - standardize_nan
+    - _target_: sklearn.preprocessing.FunctionTransformer
+      feature_names_out: one-to-one
+      func:
+        _target_: malnutrition_risk.features.standardize_nan
+        _partial_: true
+
+  # Custom Transformer for Postal Codes
+  - - prep_postal
+    - _target_: malnutrition_risk.features.PostalCodeTransformer
+      postal_column: ${dataset.schema.postal_code_col}
+      digits_to_keep: 5
+
+  # Custom Transformer to calculate vulnerability index
+  - - cal_vulnerability_index
+    - _target_: malnutrition_risk.features.VulnerabilityIndexTransformer
+
+  # Custom Transformer to adjust card spending with CPI(consumer price index)
+  - - adjust_with_cpi
+    - _target_: malnutrition_risk.features.CPIAdjustmentTransformer
+      cpi_urban_path: ${dataset.paths.reference_data.cpi_urban}
+      cpi_rural_path: ${dataset.paths.reference_data.cpi_rural}
+      card_cols: ${dataset.schema.card_cols}
+      base_year: "1400"
+
+#  - - adjust_card_Be_card
+#    - _target_: malnutrition_risk.features.InflationAdjustmentTransformer
+#      inflation_urban_path: ../data/00_raw/urban_household_yearly_inflation_per_province.csv
+#      inflation_rural_path: ../data/00_raw/rural_household_yearly_inflation_per_province.csv
+#      card_cols: ["CardBeCardPerMonth_1401", "CardBeCardPerMonth_1402"]
+

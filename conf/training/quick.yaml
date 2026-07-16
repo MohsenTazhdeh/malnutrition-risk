@@ -1,0 +1,9 @@
+# Fast smoke-test profile:  python -m orchestration.train training=quick
+cv_folds: 2
+n_jobs: -1
+
+optimization:
+  n_trials: 1
+  objective: average_precision    # HPO objective
+
+self_labeling: false

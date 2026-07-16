@@ -1,0 +1,35 @@
+defaults:
+  - data_prep: default
+  - dataset: population_profiles
+  - feature_engineering: base
+  - preprocessor: tree
+  - model: lightgbm
+  - training: default
+  - _self_                   # _self_ means we want data_prep, ..., experiment inside the current file (if they exist here ofcourse)
+                             # to be preferential over data_prep, ... experiment we loaded in default
+
+# global variables
+seed: 42
+
+# hydra settings
+hydra:
+  run:
+    # outputs/experiments/<dataset>/<fe>/<preproc>/<model>/<timestamp>
+    dir: outputs/experiments/${hydra.runtime.choices.dataset}/${hydra.runtime.choices.feature_engineering}/${hydra.runtime.choices.preprocessor}/${hydra.runtime.choices.model}/${now:%Y-%m-%d_%H-%M-%S}
+  sweep:
+    dir: outputs/_multirun/${now:%Y-%m-%d_%H-%M-%S}
+    subdir: ${hydra.job.override_dirname}     # one subdir per param combination in a sweep
+  job:
+    chdir: false                               # do not change the current working directory
+
+mlflow:
+  tracking_uri: ${oc.env:MLFLOW_TRACKING_URI,sqlite:///mlflow_db/malnutrition.sqlite}
+  artifact_location: ./artifacts/mlruns
+  experiment_name: malnutrition_risk
+  registered_model_name: null            # null = log model but don't register
+
+optuna:
+  storage: ${oc.env:OPTUNA_STORAGE,sqlite:///mlflow_db/optuna.db}
+  study_version: 1                       # bump to force a fresh study deliberately
+
+
