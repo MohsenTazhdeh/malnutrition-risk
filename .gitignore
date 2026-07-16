@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# ---- Local environment ----
+.env
+
+# ---- Virtual environments ----
+.venv/
+venv/
+
+# ---- IDEs & editors ----
+.idea/
+.vscode/
+
+# ---- Jupyter ----
+.ipynb_checkpoints/
+
+# Hydra / experiment run outputs
+/outputs/
+
+# MLflow + Optuna local stores (DB-backed)
+/mlflow_db/
+/artifacts/
+
+# ---- Data: ignore contents, keep directory skeleton ----
+/data/**
+!/data/**/
+!/data/**/.gitkeep
+
+# ---- OS junk ----
+Thumbs.db
+.DS_Store
+
+.claude/
