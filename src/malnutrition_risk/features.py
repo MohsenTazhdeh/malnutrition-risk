@@ -4,38 +4,39 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.validation import validate_data
 from malnutrition_risk.utils import check_required_cols
-
+from itertools import chain
 
 """Custom Transformers For Feature Engineering"""
 
-def standardize_nan(X: pd.DataFrame) -> pd.DataFrame:
-    return X.replace({pd.NA: np.nan, None: np.nan})
+def _flatten(cols):
+    return list(chain.from_iterable([c] if isinstance(c, str) else c for c in cols))
 
-class ToCategory(BaseEstimator, TransformerMixin):
+class ColumnPruner(BaseEstimator, TransformerMixin):
+
+    def __init__(self, drop_cols, strict: bool = True):
+        self.drop_cols = drop_cols
+        self.strict = strict
 
     def fit(self, X, y=None):
         validate_data(self, X, reset=True, dtype=None, ensure_all_finite=False)
-
-        # convert pinned categories to plain list to make it serializable for serving/inference
-        self.categories_ = {c : X[c].dropna().astype('category').cat.categories.to_list() for c in X.columns}
-
+        drop_cols = _flatten(self.drop_cols)
+        missing = set(drop_cols) - set(X.columns)
+        if self.strict and missing:
+            raise ValueError(f"{self.__class__.__name__}: These columns are not in the input DataFrame: {missing}")
+        self.keep_cols_ = [col for col in X.columns if col not in drop_cols]
         return self
 
     def transform(self, X):
-        check_is_fitted(self, ["categories_", "feature_names_in_"])
+        check_is_fitted(self, ["keep_cols_", "feature_names_in_"])
         validate_data(self, X, reset=False, dtype=None, ensure_all_finite=False)
-
-        X = X.copy()
-        for c in X.columns:
-            X[c] = pd.Categorical(X[c], categories=self.categories_[c])
-
-        return X
+        return X[self.keep_cols_].copy()
 
     def get_feature_names_out(self, input_features=None):
-        if input_features is None:
-            check_is_fitted(self, "feature_names_in_")
-            input_features = self.feature_names_in_
-        return np.array(input_features, dtype=object)
+        check_is_fitted(self, "feature_names_in_")
+        return np.array(self.keep_cols_, dtype=object)
+
+def standardize_nan(X: pd.DataFrame) -> pd.DataFrame:
+    return X.replace({pd.NA: np.nan, None: np.nan})
 
 class PostalCodeTransformer(BaseEstimator, TransformerMixin):
 
@@ -347,10 +348,42 @@ class InflationAdjustmentTransformer(BaseEstimator, TransformerMixin):
         features.extend([f"real_growth_{col}" for col in self.card_cols[1:]])
         return np.array(features, dtype=object)
 
+class DtypeContract(BaseEstimator, TransformerMixin):
+    def __init__(self, cate_cols):
+        self.cate_cols = cate_cols
 
+    def fit(self, X, y=None):
+        validate_data(self, X, reset=True, dtype=None, ensure_all_finite=False)
+        present_cate_cols = [c for c in _flatten(self.cate_cols) if c in X.columns]
+        self.categories_ = {c: X[c].dropna().astype('category').cat.categories.to_list() for c in present_cate_cols}
+        self._check_contract(self._apply(X))
+        return self
 
+    def transform(self, X):
+        check_is_fitted(self, ["categories_", "feature_names_in_"])
+        validate_data(self, X, reset=False, dtype=None, ensure_all_finite=False)
+        X = self._apply(X)
+        self._check_contract(X)
+        return X
 
+    def _apply(self, X):
+        X = X.copy()
+        for col, cats in self.categories_.items():
+            X[col] = pd.Categorical(X[col], categories=cats)
+        return X
 
+    def _check_contract(self, X):
+        bad = [c for c in X.columns if not
+        (isinstance(X[c].dtype, pd.CategoricalDtype) or pd.api.types.is_numeric_dtype(X[c]))]
+        if bad:
+            raise TypeError(f"{self.__class__.__name__} violated by columns: {bad}\n"
+                            f"every feature-engineering output must be either numeric or categorical.")
+
+    def get_feature_names_out(self, input_features=None):
+        if input_features is None:
+            check_is_fitted(self, "feature_names_in_")
+            input_features = self.feature_names_in_
+        return np.array(input_features, dtype=object)
 
 
 

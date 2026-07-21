@@ -10,8 +10,8 @@ def build_pipeline(cfg: DictConfig) -> Pipeline:
 
     # Sklearn strictly requires a list of tuples for the transformers parameter.
     # Because YAML only creates lists of lists, we cast the inner lists to tuples here.
-    if hasattr(feature_engineering, "transformers"):
-        feature_engineering.transformers = [tuple(step) for step in feature_engineering.transformers]
+    if hasattr(feature_engineering, "steps"):
+        feature_engineering.steps = [tuple(step) for step in feature_engineering.steps]
     if hasattr(preprocessor, "transformers"):
         preprocessor.transformers = [tuple(step) for step in preprocessor.transformers]
 

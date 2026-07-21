@@ -11,9 +11,11 @@ DEFAULT_MODEL_FILENAME = "model.skops"
 
 _TRUSTED_TYPES = [
     'collections.OrderedDict', 'functools.partial', 'lightgbm.basic.Booster',
-    'lightgbm.sklearn.LGBMClassifier', 'malnutrition_risk.features.CPIAdjustmentTransformer',
+    'lightgbm.sklearn.LGBMClassifier', "sklearn.compose._column_transformer.make_column_selector",
+    'malnutrition_risk.features.CPIAdjustmentTransformer',
     'malnutrition_risk.features.PostalCodeTransformer', 'malnutrition_risk.features.ToCategory',
-    'malnutrition_risk.features.VulnerabilityIndexTransformer', 'malnutrition_risk.features.standardize_nan'
+    'malnutrition_risk.features.VulnerabilityIndexTransformer', 'malnutrition_risk.features.standardize_nan',
+    'malnutrition_risk.features.ColumnPruner', 'malnutrition_risk.features.DtypeContract'
     ]
 
 # package source bundled with the model -> loads without malnutrition_risk pip-installed

@@ -56,6 +56,7 @@ class PipelineOptimizer:
             trial_pipeline, self.X, self.y, cv=self.custom_cv,
             groups=self.X[self.group], scoring=self.objective,
             params=fit_params, n_jobs=self.n_jobs,
+            error_score="raise"
         )
         return scores.mean()
 
