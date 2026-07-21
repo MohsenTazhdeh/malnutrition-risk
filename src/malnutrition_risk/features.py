@@ -348,7 +348,7 @@ class InflationAdjustmentTransformer(BaseEstimator, TransformerMixin):
         features.extend([f"real_growth_{col}" for col in self.card_cols[1:]])
         return np.array(features, dtype=object)
 
-class DtypeContract:
+class DtypeContract(BaseEstimator, TransformerMixin):
     def __init__(self, cate_cols):
         self.cate_cols = cate_cols
 

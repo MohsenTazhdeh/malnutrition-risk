@@ -1,5 +1,11 @@
 _target_: sklearn.pipeline.Pipeline
 steps:
+  - - prune
+    - _target_: malnutrition_risk.features.ColumnPruner
+      drop_cols:
+        - ${dataset.schema.metadata_cols}
+        - ${dataset.schema.high_corr_cols}
+
   # Custom Transformer to standardize missing values
   - - standardize_nan
     - _target_: sklearn.preprocessing.FunctionTransformer
@@ -31,4 +37,10 @@ steps:
 #      inflation_urban_path: ../data/00_raw/urban_household_yearly_inflation_per_province.csv
 #      inflation_rural_path: ../data/00_raw/rural_household_yearly_inflation_per_province.csv
 #      card_cols: ["CardBeCardPerMonth_1401", "CardBeCardPerMonth_1402"]
+  - - dtype_contract
+    - _target_: malnutrition_risk.features.DtypeContract
+      cate_cols:
+        - ${dataset.schema.geo_cols}
+        - ${dataset.schema.categorical_cols}
+
 
