@@ -15,7 +15,7 @@ seed: 42
 hydra:
   run:
     # outputs/experiments/<dataset>/<fe>/<preproc>/<model>/<timestamp>
-    dir: outputs/experiments/${hydra.runtime.choices.dataset}/${hydra.runtime.choices.feature_engineering}/${hydra.runtime.choices.preprocessor}/${hydra.runtime.choices.model}/${now:%Y-%m-%d_%H-%M-%S}
+    dir: outputs/experiments/${hydra.runtime.choices.feature_engineering}/${hydra.runtime.choices.preprocessor}/${hydra.runtime.choices.model}/${now:%Y-%m-%d_%H-%M-%S}
   sweep:
     dir: outputs/_multirun/${now:%Y-%m-%d_%H-%M-%S}
     subdir: ${hydra.job.override_dirname}     # one subdir per param combination in a sweep

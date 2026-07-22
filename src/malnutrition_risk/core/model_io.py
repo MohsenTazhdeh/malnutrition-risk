@@ -18,6 +18,13 @@ _TRUSTED_TYPES = [
     'malnutrition_risk.features.ColumnPruner', 'malnutrition_risk.features.DtypeContract'
     ]
 
+IDENTITY_KEYS = ("feature_engineering", "preprocessor", "model")
+
+def compose_run_name(choices: Mapping[str, str], prefix: str = None):
+    body = "__".join(choices[k] for k in IDENTITY_KEYS)
+    return f"{prefix}__{body}" if prefix else body
+
+
 # package source bundled with the model -> loads without malnutrition_risk pip-installed
 _PACKAGE_ROOT = Path(__file__).resolve().parents[1]      # .../src/malnutrition_risk
 _BASE_DEPS = ("scikit-learn", "skops", "numpy", "scipy", "pandas")
@@ -96,10 +103,12 @@ def log_model_params(params: Mapping, *, model_id: str):
     import mlflow
     mlflow.log_model_params({k: str(v) for k, v in params.items()}, model_id=model_id)
 
-def save_run_pointer(run_dir: Path, *, run_id: str, model_uri: str, study_name: str = None):
+def save_run_pointer(run_dir: Path, *, run_id: str, model_uri: str,
+                     study_name: str, choices: Mapping[str, str] = None):
     path = Path(run_dir) / "mlflow_run.json"
     path.write_text(json.dumps(
-        {"run_id": run_id, "model_uri": model_uri, "study_name": study_name},
+        {"run_id": run_id, "model_uri": model_uri,
+        "study_name": study_name, "choices": dict(choices) if choices else None},
         indent=2
     ))
     return path
