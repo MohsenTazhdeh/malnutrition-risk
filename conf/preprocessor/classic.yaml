@@ -1,27 +1,40 @@
 _target_: sklearn.compose.ColumnTransformer
 remainder: drop
-verbose_feature_names_out: False
+verbose_feature_names_out: false
 
 transformers:
 
-  # Numeric Pipeline (Impute + Scale)
-  - - num_prep
+  # Numeric Pipeline: Impute + Scale
+  - - num
     - _target_: sklearn.pipeline.make_pipeline
       _args_:
         - _target_: sklearn.impute.SimpleImputer
           strategy: median
-        - _target_: sklearn.preprocessing.StandardScaler
+        - _target_: sklearn.preprocessing.RobustScaler
     - _target_: sklearn.compose.make_column_selector
       dtype_include: number
 
-  # Categorical Pipeline(Impute + OHE)
-  - - cate_prep
+  # Categorical Pipeline(low-cardinality): Impute + OHE
+  - - cat_low
     - _target_: sklearn.pipeline.make_pipeline
       _args_:
         - _target_: sklearn.impute.SimpleImputer
           strategy: most_frequent
         - _target_: sklearn.preprocessing.OneHotEncoder
           handle_unknown: ignore
-          sparse_output: False
-    - _target_: sklearn.compose.make_column_selector
-      dtype_include: category
+          sparse_output: false
+    - _target_: malnutrition_risk.features.CategoryCardinalitySelector
+      threshold: 50
+      pick: low
+
+  # Categorical Pipeline(high-cardinality): TE + Scale
+  - - cat_high
+    - _target_: sklearn.pipeline.make_pipeline
+      _args_:
+        - _target_: sklearn.preprocessing.TargetEncoder
+          target_type: binary
+          smooth: auto
+        - _target_: sklearn.preprocessing.StandardScaler
+    - _target_: malnutrition_risk.features.CategoryCardinalitySelector
+      threshold: 50
+      pick: high

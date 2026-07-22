@@ -386,7 +386,15 @@ class DtypeContract(BaseEstimator, TransformerMixin):
         return np.array(input_features, dtype=object)
 
 
+class CategoryCardinalitySelector:
+    def __init__(self, threshold: int = 50, pick: str = 'low'):
+        self.threshold = threshold
+        self.pick = pick
 
+    def __call__(self, X):
+        cate_cols = X.select_dtypes(include='category').columns
+        return [c for c in cate_cols
+                if (X[c].nunique(dropna=True) <= self.threshold) == (self.pick == 'low')]
 
 
 

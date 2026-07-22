@@ -15,7 +15,8 @@ _TRUSTED_TYPES = [
     'malnutrition_risk.features.CPIAdjustmentTransformer',
     'malnutrition_risk.features.PostalCodeTransformer', 'malnutrition_risk.features.ToCategory',
     'malnutrition_risk.features.VulnerabilityIndexTransformer', 'malnutrition_risk.features.standardize_nan',
-    'malnutrition_risk.features.ColumnPruner', 'malnutrition_risk.features.DtypeContract'
+    'malnutrition_risk.features.ColumnPruner', 'malnutrition_risk.features.DtypeContract',
+    'malnutrition_risk.features.CategoryCardinalitySelector', 'numpy.dtype'
     ]
 
 # package source bundled with the model -> loads without malnutrition_risk pip-installed
