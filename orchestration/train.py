@@ -68,17 +68,11 @@ def main(cfg: DictConfig):
                            seed=train_cfg.seed, objective=train_cfg.objective, dataset_digest=mlflow_dataset.digest)
 
     choices = HydraConfig.get().runtime.choices
-    run_name = "__".join([
-        choices["dataset"],
-        choices["feature_engineering"],
-        choices["preprocessor"],
-        choices["model"],
-    ])
+    identity = {k: choices[k] for k in model_io.IDENTITY_KEYS}
+    run_name = model_io.compose_run_name(identity, prefix="train")
     study_name = build_study_name(run_name, fp, cfg.optuna.study_version)
 
-    tags = {"dataset": choices.dataset, "feature_engineering": choices.feature_engineering,
-            "preprocessor": choices.preprocessor, "model": choices.model,
-            "phase": "training", "optuna_study": study_name}
+    tags = {**identity, "phase": "training", "optuna_study": study_name}
 
     with tracking.start_run(tracking_uri=cfg.mlflow.tracking_uri,
                             experiment_name=cfg.mlflow.experiment_name,
@@ -108,7 +102,8 @@ def main(cfg: DictConfig):
                            registered_model_name=cfg.mlflow.registered_model_name)
 
         model_io.save_run_pointer(run_dir, run_id=run.info.run_id,
-                                     model_uri=model_info.model_uri, study_name=study_name)
+                                  model_uri=model_info.model_uri, study_name=study_name,
+                                  choices=identity)
 
         logger.info(result.summary())
         logger.info(f"training: run_id={run.info.run_id}, model_uri={model_info.model_uri}, study={study_name}")

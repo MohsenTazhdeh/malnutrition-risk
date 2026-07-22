@@ -3,7 +3,8 @@ from omegaconf import DictConfig
 import logging
 from pathlib import Path
 from hydra.core.hydra_config import HydraConfig
-from malnutrition_risk.core.model_io import RunDirModelResolver, MlflowModelResolver, read_run_pointer
+from malnutrition_risk.core.model_io import (RunDirModelResolver, MlflowModelResolver,
+                                             read_run_pointer, compose_run_name, IDENTITY_KEYS)
 from malnutrition_risk.core import tracking
 from malnutrition_risk.core.artifacts import ArtifactWriter
 from malnutrition_risk.data.loading import load_labeled_xy
@@ -33,14 +34,12 @@ def main(cfg: DictConfig):
         strict=cfg.eval.strict,
     )
 
-    tags = {'phase': 'evaluation'}
     pointer = read_run_pointer(run_dir)
+    identity = pointer.get("choices") or ""
+    run_name = compose_run_name(identity, prefix='eval')
+    tags = {**identity, 'phase': 'evaluation'}
     if pointer.get('run_id'):
         tags["mlflow.parentRunId"] = pointer['run_id']
-
-    choices = HydraConfig.get().runtime.choices
-    run_name = "eval__" + "__".join([choices["dataset"], choices["feature_engineering"],
-                                     choices["preprocessor"], choices["model"]])
 
     with tracking.start_run(tracking_uri=cfg.mlflow.tracking_uri,
                             experiment_name=cfg.mlflow.experiment_name,
