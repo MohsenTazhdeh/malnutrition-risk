@@ -14,7 +14,7 @@ seed: 42
 # hydra settings
 hydra:
   run:
-    # outputs/experiments/<dataset>/<fe>/<preproc>/<model>/<timestamp>
+    # outputs/experiments/<fe>/<preproc>/<model>/<timestamp>
     dir: outputs/experiments/${hydra.runtime.choices.feature_engineering}/${hydra.runtime.choices.preprocessor}/${hydra.runtime.choices.model}/${now:%Y-%m-%d_%H-%M-%S}
   sweep:
     dir: outputs/_multirun/${now:%Y-%m-%d_%H-%M-%S}

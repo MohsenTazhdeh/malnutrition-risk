@@ -18,7 +18,7 @@ steps:
   - - prep_postal
     - _target_: malnutrition_risk.features.PostalCodeTransformer
       postal_column: ${dataset.schema.postal_code_col}
-      digits_to_keep: 5
+      digits_to_keep: 7
 
   # Custom Transformer to calculate vulnerability index
   - - cal_vulnerability_index
