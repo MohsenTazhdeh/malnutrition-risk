@@ -35,7 +35,7 @@ def main(cfg: DictConfig) -> None:
         curator = DataCurator(
             curation_cfg.target,
             curation_cfg.group,
-            curation_cfg.cate_cols,
+            curation_cfg.no_nan_cols,
         )
         logger.info(f"initialized {curator}")
         df_curated = curator.curate(df)

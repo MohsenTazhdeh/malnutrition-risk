@@ -51,7 +51,7 @@ class RunDirModelResolver(ModelResolver):
             raise FileNotFoundError(
                 f"no {self.model_file_name} in run_dir={self.run_dir}. "
                 f"pass a training run directory and try again. e.g.\n"
-                f"eval.run_dir=outputs/experiments/<dataset>/<fe>/<preproc>/<model>/<timestamp>"
+                f"eval.run_dir=outputs/experiments/<fe>/<preproc>/<model>/<timestamp>"
             )
         return sio.load(path, trusted=_TRUSTED_TYPES)
 
