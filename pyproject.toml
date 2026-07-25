@@ -5,19 +5,23 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "malnutrition_risk"
 version = "0.1.0"
+description = "A model to predict individuals in risk of malnutrition based on financial, socio-economical, and geographical data."
+requires-python = ">=3.12,<3.13"
 dependencies = [
-    "hydra-core",
-    "mlflow>=3,<4",
-    "optuna",
-    "pandas",
-    "scikit-learn",
-    "lightgbm",
-    "pyarrow",
-    "shap",
-    "matplotlib",
+    "hydra-core>=1.3.3",
+    "mlflow>=3.14",
+    "optuna>=4.9",
+    "pandas>=2.3",
+    "numpy>=1.26,<2",
+    "scikit-learn>=1.9.0",
+    "lightgbm>=4.7,<4.8",
+    "pyarrow>=21",
+    "shap>=0.46",
+    "matplotlib>=3.9",
 ]
 [project.optional-dependencies]
 postgres = ["psycopg2-binary"]
+dev = ["pytest", "ruff"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
