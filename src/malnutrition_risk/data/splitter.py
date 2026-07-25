@@ -22,10 +22,6 @@ into the Train set (Total: 5 malnutrition cases), and 5 households with 5 sick p
 into the Test set (Total: 25 malnutrition cases).
 """
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
 logger = logging.getLogger(__name__)
 
 
