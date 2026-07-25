@@ -29,5 +29,5 @@ reg_lambda: 0.0 # $L_2$ regularization
 # --- Dynamic Overrides ---
 random_state: ${seed}
 scale_pos_weight: ${dataset.class_balance.scale_pos_weight}
-n_jobs: ${training.n_jobs}
+n_jobs: ${training.model_n_jobs}
 

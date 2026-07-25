@@ -1,5 +1,6 @@
 cv_folds: 5
-n_jobs: -1
+cv_n_jobs: 1
+model_n_jobs: -1
 
 optimization:
   n_trials: 5

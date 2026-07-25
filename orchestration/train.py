@@ -58,7 +58,7 @@ def main(cfg: DictConfig):
         group_col=cfg.dataset.group,
         cv_folds=cfg.training.cv_folds,
         n_trials=cfg.training.optimization.n_trials,
-        n_jobs=cfg.training.n_jobs,
+        n_jobs=cfg.training.cv_n_jobs,
         seed=cfg.seed,
         objective=cfg.training.optimization.objective,
     )
