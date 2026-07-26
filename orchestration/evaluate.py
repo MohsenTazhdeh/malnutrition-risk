@@ -18,7 +18,8 @@ def main(cfg: DictConfig):
     logger.info("====== Starting Evaluation ======")
     run_dir = Path(cfg.eval.run_dir)
     model = MlflowModelResolver(cfg.model_uri).resolve() if cfg.eval.model_uri else RunDirModelResolver(run_dir).resolve()
-    X, y = load_labeled_xy(cfg.dataset.paths.val, target_col=cfg.dataset.target)
+    X, y = load_labeled_xy(cfg.dataset.paths.val, target_col=cfg.dataset.target, 
+                           label_col=cfg.dataset.schema.label_indicator_col)
 
     out_dir = Path(HydraConfig.get().runtime.output_dir)
     writer = ArtifactWriter(out_dir)
