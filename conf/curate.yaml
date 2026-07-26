@@ -1,0 +1,8 @@
+defaults:
+  - config
+  - _self_
+
+hydra:
+  run:
+    dir: outputs/data_prep/curate/${now:%Y-%m-%d_%H-%M-%S}
+  

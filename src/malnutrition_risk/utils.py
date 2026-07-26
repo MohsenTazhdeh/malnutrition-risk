@@ -1,5 +1,7 @@
 import functools
 import numpy as np
+import pandas as pd
+from pathlib import Path
 
 
 def check_required_cols(func):
@@ -15,6 +17,11 @@ def check_required_cols(func):
         return func(self, X, *args, **kwargs)
     return wrapper
 
+def write_parquet(df: pd.DataFrame, path: str) -> Path:
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    df.to_parquet(path, index=False)
+    return output_path
 
 class TrueLabelCV:
     """

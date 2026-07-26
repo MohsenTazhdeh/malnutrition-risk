@@ -1,10 +1,7 @@
 curation:
+  _target_: malnutrition_risk.data.curator.DataCurator
   target: ${dataset.target}
   group: ${dataset.group}
-  cate_cols:
-    - SabteAhval_provincename
-    - SabteAhval_countyname
-
   no_nan_cols:
     - ISBimarKhas
     - IsMalool
