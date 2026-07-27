@@ -27,6 +27,8 @@ schema:
     - id                                   # شناسه
     - Parent_Id                            # شناسه سرپرست
 
+  label_indicator_col: has_label           # آیا برچسب سوتغذیه دارد؟
+
   postal_code_col: postal_code              # 7 رقم ابتدای کد پستی
 
   geo_cols:

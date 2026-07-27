@@ -44,7 +44,8 @@ def _serving_input_example(X, geo_cols):
 def main(cfg: DictConfig):
     logger.info("====== Starting Training ======")
     pipeline = build_pipeline(cfg)
-    X, y = load_labeled_xy(cfg.dataset.paths.train, cfg.dataset.target)
+    X, y = load_labeled_xy(cfg.dataset.paths.train, target_col=cfg.dataset.target,
+                           label_col=cfg.dataset.schema.label_indicator_col)
     run_dir = Path(HydraConfig.get().runtime.output_dir)
     writer = ArtifactWriter(run_dir)
 

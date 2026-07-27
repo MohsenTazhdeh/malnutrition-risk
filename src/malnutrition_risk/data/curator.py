@@ -19,11 +19,13 @@ class DataCurator:
     def __init__(self,
                  target: str,
                  group: str,
-                 no_nan_cols: list[str]):
+                 no_nan_cols: list[str],
+                 label_indicator_col: str):
 
         self.target = target
         self.group = group
         self.no_nan_cols = list(no_nan_cols)
+        self.label_indicator_col = label_indicator_col
 
     def label_propagation(self, df: pd.DataFrame) -> pd.DataFrame:
         """Malnutrition is a household-level state, not an individual state.
@@ -46,11 +48,9 @@ class DataCurator:
         return df
 
     def add_label_indicator(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Add binary indicator for whether individual has observed (malnutrition) label"""
-        df['has_label'] = df[self.target].isin([0,1]).astype(int)
-        logger.info(f"added a new column `has_label` to indicate whether"
-                    f"an individual has observed (malnutrition) label")
-        logger.info(f"{df['has_label'].sum()} rows have label.")
+        """Add binary indicator for whether an individual has observed (malnutrition) label"""
+        df[self.label_indicator_col] = df[self.target].isin([0,1]).astype(int)
+        logger.info(f"added `{self.label_indicator_col}` indicator; {df[self.label_indicator_col].sum()} rows have a label.")
         return df
 
     def fix_implicit_zeros(self, df: pd.DataFrame) -> pd.DataFrame:

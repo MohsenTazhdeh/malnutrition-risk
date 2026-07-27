@@ -1,0 +1,7 @@
+defaults:
+  - config
+  - _self_
+
+hydra:
+  run:
+    dir: outputs/data_prep/split/${now:%Y-%m-%d_%H-%M-%S}

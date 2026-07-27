@@ -1,59 +1,56 @@
 import hydra
-from omegaconf import DictConfig, OmegaConf
-from hydra.utils import to_absolute_path
+from omegaconf import DictConfig
+from hydra.core.hydra_config import HydraConfig
+from hydra.utils import to_absolute_path, instantiate
 from pathlib import Path
 import pandas as pd
-import mlflow
 import logging
-from malnutrition_risk.data.curator import DataCurator
+from malnutrition_risk.core import tracking
+from malnutrition_risk.utils import write_parquet
 
 logger = logging.getLogger(__name__)
 
-@hydra.main(version_base='1.3', config_path='../conf', config_name='config')
+@hydra.main(version_base='1.3', config_path='../conf', config_name='curate')
 def main(cfg: DictConfig) -> None:
-    mlflow.set_tracking_uri(cfg.mlflow.tracking_uri)
-    mlflow.set_experiment(cfg.mlflow.experiment_name)
+    logger.info("====== Starting Curation ======")
 
-    with mlflow.start_run(run_name="curate_data"):
-        # convert Hydra config to a flat dictionary and log as MLflow parameter
-        mlflow.log_params(OmegaConf.to_container(cfg, resolve=True))
+    df = pd.read_parquet(cfg.dataset.paths.raw)
+    logger.info(f"Loaded {len(df)} records with {len(df.columns)} columns")
 
-        # load data
-        df = pd.read_parquet(to_absolute_path(cfg.dataset.paths.raw))
-        logger.info(f"Loaded {len(df)} records with {len(df.columns)} columns")
+    raw_dataset = tracking.to_mlflow_dataset(df, source=cfg.dataset.paths.raw, target=cfg.dataset.target, name='raw')
 
-        # log raw data statistics
-        mlflow.log_metrics({
-            "raw data total records": len(df),
-            "raw_data_malnutrition_cases": df[cfg.dataset.target].sum(),
-            "raw_data_malnutrition_rate": df[cfg.dataset.target].mean()
+    tags = {"phase": "data_prep", "stage": "curation",
+            "dataset": HydraConfig.get().runtime.choices.dataset}
+
+    with tracking.start_run(tracking_uri=cfg.mlflow.tracking_uri,
+                            experiment_name=cfg.mlflow.experiment_name,
+                            artifact_location=cfg.mlflow.artifact_location,
+                            tags=tags, run_name='curate'):
+        
+        tracking.log_input(raw_dataset, context='curation')
+
+        curator = instantiate(cfg.data_prep.curation)
+        df_curated = curator.curate(df.copy())
+
+        output_path = write_parquet(df_curated, cfg.dataset.paths.curated)
+        logger.info(f"Saved curated data to {output_path}")
+
+        tracking.log_params({
+            "target": cfg.data_prep.curation.target,
+            "group": cfg.data_prep.curation.group,
+            "n_no_nan_cols": len(cfg.data_prep.curation.no_nan_cols),
+            "raw_rows": len(df),
+            "curated_rows": len(df_curated),
+        })
+        tracking.log_metrics({
+            "raw_malnutrition_cases": float(df[cfg.data_prep.curation.target].sum()),
+            "raw_malnutrition_rate": float(df[cfg.data_prep.curation.target].mean()),
+            "curated_malnutrition_cases": float(df_curated[cfg.data_prep.curation.target].sum()),
+            "curated_malnutrition_rate": float(df_curated[cfg.data_prep.curation.target].mean()),
         })
 
-        curation_cfg = cfg.data_prep.curation
-
-        # curate
-        curator = DataCurator(
-            curation_cfg.target,
-            curation_cfg.group,
-            curation_cfg.no_nan_cols,
-        )
-        logger.info(f"initialized {curator}")
-        df_curated = curator.curate(df)
-
-        # save curated data
-        output_path = Path(cfg.dataset.paths.curated)
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        df_curated.to_parquet(output_path, index=False)
-        logger.info(f"saved curated data to {output_path}")
-
-        # log curated data as MLflow artifact
-        mlflow.log_artifact(str(output_path), artifact_path="data")
-
-        # log curated data statistics
-        mlflow.log_metrics({
-            "curated data malnutrition cases": df_curated[curation_cfg.target].sum(),
-            "curated data malnutrition rate": df_curated[curation_cfg.target].mean()
-        })
+        run_dir = Path(HydraConfig.get().runtime.output_dir)
+        tracking.log_config(run_dir)
 
 if __name__ == '__main__':
     main()
