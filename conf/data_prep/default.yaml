@@ -17,8 +17,12 @@ curation:
     - IsBimePardaz
 
 splitting:
-  target: ${dataset.target}
-  group: ${dataset.group}
+  splitter: 
+    _target_: malnutrition_risk.data.splitter.HouseholdAwareSplitter
+    _partial_: true 
+    target: ${dataset.target}
+    group: ${dataset.group}
+    label_indicator_col: ${dataset.schema.label_indicator_col}
   test_size: 0.2
   val_size: 0.2
   random_state: ${seed}

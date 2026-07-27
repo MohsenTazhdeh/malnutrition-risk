@@ -1,84 +1,69 @@
 import pandas as pd
 import hydra
+from hydra.utils import instantiate
+from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig
-from malnutrition_risk.data.splitter import HouseholdAwareSplitter
-import mlflow
+from malnutrition_risk.data.splitter import SplitConfig, run_split
 import logging
+from malnutrition_risk.core import tracking
 from pathlib import Path
+from malnutrition_risk.utils import write_parquet
 
 logger = logging.getLogger(__name__)
 
-@hydra.main(version_base='1.3', config_path='../conf', config_name="config")
+@hydra.main(version_base='1.3', config_path='../conf', config_name="split")
 def main(cfg: DictConfig):
-    """Split curated data into train/test sets at household level."""
+    """Split curated data into train/validation/test sets at household level."""
+    logger.info("====== Starting Split ======")
+    splitting_cfg = cfg.data_prep.splitting
+    
+    df = pd.read_parquet(cfg.dataset.paths.curated)
+    logger.info(f"Loaded curated data from {cfg.dataset.paths.curated}")
 
-    # setup mlflow
-    mlflow.set_tracking_uri(cfg.mlflow.tracking_uri)
-    mlflow.set_experiment(cfg.mlflow.experiment_name)
+    curated_dataset = tracking.to_mlflow_dataset(
+        df, source=cfg.dataset.paths.curated, target=cfg.dataset.target, name='curated')
 
-    with mlflow.start_run(run_name="split_data"):
-        split_cfg = cfg.data_prep.splitting
+    splitter_factory = instantiate(splitting_cfg.splitter)
+    split_cfg = SplitConfig(
+        target=splitting_cfg.splitter.target,
+        group=splitting_cfg.splitter.group,
+        label_col=splitting_cfg.splitter.label_indicator_col,
+        test_size=splitting_cfg.test_size,
+        val_size=splitting_cfg.val_size,
+        random_state=splitting_cfg.random_state,
+    )
 
-        mlflow.log_params({
+    tags = {"phase": "data_prep", "stage": "split",
+            "dataset": HydraConfig.get().runtime.choices.dataset}
+
+
+    with tracking.start_run(tracking_uri=cfg.mlflow.tracking_uri,
+                            experiment_name=cfg.mlflow.experiment_name,
+                            artifact_location=cfg.mlflow.artifact_location,
+                            run_name="split", tags=tags):
+        
+        tracking.log_input(curated_dataset, context="split")
+        tracking.log_params({
             "train_size": 1 - (split_cfg.val_size + split_cfg.test_size),
             "val_size": split_cfg.val_size,
             "test_size": split_cfg.test_size,
             "random_state": split_cfg.random_state,
             "target": split_cfg.target,
-            "group": split_cfg.group
+            "group": split_cfg.group,
         })
 
-        # load curated data
-        logger.info(f"Loading curated data from {cfg.dataset.paths.curated}")
-        df = pd.read_parquet(cfg.dataset.paths.curated)
+        splits, stats = run_split(df, splitter_factory, split_cfg)
 
-        # first split: isolate test set
-        train_val_df, test_df = HouseholdAwareSplitter(
-            target=split_cfg.target,
-            group=split_cfg.group,
-            split_size=split_cfg.test_size,
-            random_state=split_cfg.random_state,
-        ).split(df)
-
-        # val_size is relative to original data, so adjust for train_val size
-        val_fraction = split_cfg.val_size / (1 - split_cfg.test_size)
-
-        # second split: separate train and validation set
-        # use a different seed for second split. this ensures the two splits use different random seeds,
-        # to get independent randomization and avoid split patterns that might correlate in unexpected ways.
-        train_df, val_df = HouseholdAwareSplitter(
-            target=split_cfg.target,
-            group=split_cfg.group,
-            split_size=val_fraction,
-            random_state=split_cfg.random_state + 1,
-        ).split(train_val_df)
-
-        # save splits
-        for name, data, path_key in [
-            ('train', train_df, 'train'),
-            ('validation', val_df, 'val'),
-            ('test', test_df, 'test'),
-        ]:
-            path = Path(cfg.dataset.paths[path_key])
-            path.parent.mkdir(parents=True, exist_ok=True)
-            data.to_parquet(path, index=False)
+        for name, path_key in [('train', 'train'), ('validation', 'val'), ('test', 'test')]:
+            path = write_parquet(splits[name], cfg.dataset.paths[path_key])
             logger.info(f"saved {name} split to {path}")
-            mlflow.log_artifact(str(path), artifact_path="data")
+            tracking.log_artifact(path, artifact_path="data")
 
-        mlflow.log_metrics({
-            "total individuals": len(df),
-            "train individuals": len(train_df),
-            "val individuals": len(val_df),
-            "test individuals": len(test_df),
-            "labeled individuals in total": len(df.loc[df['has_label'] == 1]),
-            "labeled individuals in training set": (train_df['has_label'] == 1).sum(),
-            "labeled individuals in validation set": (val_df['has_label'] == 1).sum(),
-            "labeled individuals in test set": (test_df['has_label'] == 1).sum(),
-            "malnutrition individuals in total": (df[split_cfg.target] == 1).sum(),
-            "malnutrition individuals in training set": (train_df[split_cfg.target] == 1).sum(),
-            "malnutrition individuals in validation set": (val_df[split_cfg.target] == 1).sum(),
-            "malnutrition individuals in test set": (test_df[split_cfg.target] == 1).sum()
-        })
+        tracking.log_metrics(stats)
+
+        run_dir = Path(HydraConfig.get().runtime.output_dir)
+        tracking.log_config(run_dir)
+
 
 if __name__ == "__main__":
     main()

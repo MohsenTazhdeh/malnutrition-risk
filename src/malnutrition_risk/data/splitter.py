@@ -2,7 +2,8 @@ import pandas as pd
 import numpy  as np
 import logging
 from sklearn.model_selection import StratifiedGroupKFold, GroupShuffleSplit
-from pathlib import Path
+from typing import Callable
+from dataclasses import dataclass
 
 """ two splitting strategy:
 1. Balancing Individual Labels
@@ -24,6 +25,15 @@ into the Test set (Total: 25 malnutrition cases).
 
 logger = logging.getLogger(__name__)
 
+@dataclass(frozen=True)
+class SplitConfig:
+    target: str
+    group: str
+    label_col: str
+    test_size: float
+    val_size: float
+    random_state: int
+
 
 class HouseholdAwareSplitter:
     """
@@ -34,22 +44,21 @@ class HouseholdAwareSplitter:
      of at least one positive label)
     2. split unlabeled households (households where no member has label) using GroupShuffleSplit
     3. assign all household members to same split
+
+    Built via Hydra instantiate(_partial_): target,group, and label_indicator_col are bound from config;
+    split_size, random_state supplied per call.
     """
 
-    def __init__(self, target, group, split_size, random_state):
+    def __init__(self, target, group, label_indicator_col, split_size, random_state):
         self.target = target
         self.group = group
+        self.label_indicator_col = label_indicator_col
         self.split_size = split_size
         self.random_state = random_state
 
     def split(self, df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
-        """
-        split dataframe into train and test at household level
-
-        returns:
-            train_df, test_df
-        """
-        logger.info(f"Starting household-aware split (split_size={self.split_size})")
+        """split dataframe into train and test at household level"""
+        logger.info(f"household-aware split (split_size={self.split_size})")
 
         # split households into train and test
         hh_train, hh_test = self._split_households(df)
@@ -57,15 +66,12 @@ class HouseholdAwareSplitter:
         # assign individuals to splits based on household
         train_df = df.loc[df[self.group].isin(hh_train)]
         test_df = df.loc[df[self.group].isin(hh_test)]
-
-        self._log_split_stats(df, train_df, test_df)
-
         return train_df, test_df
 
     def _split_households(self, df: pd.DataFrame) -> tuple[set, set]:
 
         # separate label and unlabel individuals
-        df_labeled = df.loc[df['has_label'] == 1].copy()
+        df_labeled = df.loc[df[self.label_indicator_col] == 1].copy()
 
         # split labeled households
         hh_train_label, hh_test_label = self._split_label_hh(df_labeled)
@@ -123,25 +129,40 @@ class HouseholdAwareSplitter:
 
         return hh_train_unlabel, hh_test_unlabel
 
-    def _log_split_stats(self, df, train_df, test_df) -> None:
+def run_split(
+        df: pd.DataFrame,
+        splitter_factory: Callable[..., HouseholdAwareSplitter],
+        cfg: SplitConfig
+        ) -> tuple[dict[str, pd.DataFrame], dict]:
+    """Two-phase household-level split into train/validation/test.
 
-        logger.info(f"total individuals: {len(df)}")
-        logger.info(f"train individuals: {len(train_df)}")
-        logger.info(f"test individuals: {len(test_df)}")
+    `splitter_factory` is a partial of HouseholdAwareSplitter with target/group/
+    label_col pre-bound (Hydra instantiate(_partial_)); this function supplies the
+    per-phase split_size and seed, validates the result, and returns splits + stats.
+    """
 
-        # label distribution in train/test
-        logger.info(f"labeled individuals in total: {len(df.loc[df['has_label'] == 1])}")
-        logger.info(f"labeled individuals in training set: {len(train_df.loc[train_df['has_label'] == 1])}")
-        logger.info(f"labeled individuals in test set: {len(test_df.loc[test_df['has_label'] == 1])}")
+    # phase 1: isolate the test set
+    train_val_df, test_df = splitter_factory(
+        split_size=cfg.test_size, random_state=cfg.random_state).split(df)
 
-        # malnutrition rate in train/test
-        logger.info(f" malnutrition individuals in total: {len(df.loc[df[self.target] == 1])}")
-        logger.info(f" malnutrition individuals in train: {len(train_df.loc[train_df[self.target] == 1])}")
-        logger.info(f" malnutrition individuals in test: {len(test_df.loc[test_df[self.target] == 1])}")
+    # val_size is relative to the original data -> renormalize against train_val,
+    # and offset the seed so the two phases randomize independently
+    val_fraction = cfg.val_size / (1 - cfg.test_size)
+    train_df, val_df = splitter_factory(
+        split_size=val_fraction, random_state=cfg.random_state + 1).split(train_val_df)
+
+    splits = {'train': train_df, 'validation': val_df, 'test': test_df}
+    stats = _compute_stats(df, splits, cfg)
+    logger.info(f"split complete: train={len(train_df)}, val={len(val_df)}, test={len(test_df)}")
+    return splits, stats
 
 
-# splitter = HouseholdAwareSplitter('Has_SoeTaghzie', 'Parent_Id', test_size=0.2, random_state=42)
-# df = pd.read_parquet(r"H:\Lets see\Projects\08 Malnutrition Risk\data\curated\curated_data.parquet")
-# splitter.split(df)
-
-
+def _compute_stats(df: pd.DataFrame, splits: dict, cfg: SplitConfig) -> dict:
+    stats = {"total_individuals": len(df),
+             "total_labeled": int((df[cfg.label_col] == 1).sum()),
+             "total_malnutrition": int((df[cfg.target] == 1).sum())}
+    for name, part in splits.items():
+        stats[f"{name}_individuals"] = len(part)
+        stats[f"{name}_labeled"] = int((part[cfg.label_col] == 1).sum())
+        stats[f"{name}_malnutrition"] = int((part[cfg.target] == 1).sum())
+    return stats
