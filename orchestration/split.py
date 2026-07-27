@@ -1,3 +1,7 @@
+"""
+Stage 2 of the data pipeline: split curated data into train/validation/test
+at the household level. Run after `curate`, before `train`.
+"""
 import pandas as pd
 import hydra
 from hydra.utils import instantiate

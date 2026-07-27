@@ -1,3 +1,7 @@
+"""
+Stage 1 of the data pipeline: curate raw records into a clean table.
+Run before `split`.
+"""
 import hydra
 from omegaconf import DictConfig
 from hydra.core.hydra_config import HydraConfig
