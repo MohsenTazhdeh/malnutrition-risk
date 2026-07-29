@@ -30,6 +30,8 @@ venv/
 /data/**
 !/data/**/
 !/data/**/.gitkeep
+!/data/00_raw/*.csv
+!/data/00_raw/sample.parquet
 
 # ---- OS junk ----
 Thumbs.db

@@ -1,0 +1,12 @@
+defaults:
+ - population_profiles
+ - _self_
+
+name: population_profile_sample
+
+paths:
+  raw:     data/00_raw/sample.parquet
+  curated: data/01_curated/curated.parquet
+  train:   data/01_curated/train.parquet
+  val:     data/01_curated/validation.parquet
+  test:    data/01_curated/test.parquet
