@@ -17,7 +17,7 @@ dependencies = [
     "lightgbm>=4.7,<4.8",
     "pyarrow>=21",
     "shap>=0.46",
-    "matplotlib>=3.9",
+    "matplotlib==3.9.2",
 ]
 [project.optional-dependencies]
 postgres = ["psycopg2-binary"]
