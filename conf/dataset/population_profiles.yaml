@@ -1,4 +1,4 @@
-name: population_profile_2pct
+name: population_profiles
 target: Has_SoeTaghzie        # آیا سو تغذیه دارد
 group: Parent_Id
 
@@ -10,9 +10,9 @@ paths:
   curated: data/01_curated/curated_population_profiles.parquet
 
   # 3. Split
-  train: data/01_curated/train.parquet
-  val: data/01_curated/validation.parquet
-  test: data/01_curated/test.parquet
+  train: data/02_split/train.parquet
+  val: data/02_split/validation.parquet
+  test: data/02_split/test.parquet
 
   reference_data:
     cpi_urban: data/00_raw/urban_household_yearly_CPI_per_province.csv
