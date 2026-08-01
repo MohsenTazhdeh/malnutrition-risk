@@ -37,7 +37,6 @@ Malnutrition is a relatively rare condition and this is true for the dataset as 
 One more problem is specific to this data rather than to the imbalance. Iran has had sustained high inflation, so a rial amount recorded in 1398 is not comparable to the same nominal amount in 1402. If I leave the monetary features alone they encode time as much as they encode wealth. I deflate them using the provincial CPI series published by the Statistical Center of Iran, joined per province and year.
 
 
-
 ## Results
 
 I trained LightGBM and tuned it with Optuna against cross-validated PR-AUC. The numbers below come from a held-out set of 29,782 individuals containing 2,268 positive cases, so prevalence is 7.62%.
@@ -126,7 +125,6 @@ One structural detail matters for how the features should be read: not every col
 | Travel | Air and non-air trips, pilgrimage and non-pilgrimage, 1395 to 1399 |
 | Banking | Deposits, opening and closing account balances, 1399 to 1400 |
 | Income | Registered income |
-
 
 
 ## How the project works
@@ -227,7 +225,7 @@ A full pass from raw data to scored results:
 make setup && make curate && make split && make train && make evaluate
 ```
 
-`make train` records its output directory in `outputs/last_run.txt` and `make evaluate` reads that pointer automatically, so the common case needs no arguments and pinning an older run is still a one-liner.
+`make train` records its output directory in `outputs/last_run.txt` and `make evaluate` reads that pointer automatically, so the common case needs no arguments. If you wish to evaluate an older run read the help menu in Makefile.
 
 ### Overrides
 
