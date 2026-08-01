@@ -11,6 +11,9 @@ defaults:
 # global variables
 seed: 42
 
+# stable pointer to the most recent training run (written by train.py on success)
+last_run_pointer: outputs/last_run.txt
+
 # hydra settings
 hydra:
   run:

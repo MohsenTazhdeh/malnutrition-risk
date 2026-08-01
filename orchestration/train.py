@@ -106,6 +106,8 @@ def main(cfg: DictConfig):
                                   model_uri=model_info.model_uri, study_name=study_name,
                                   choices=identity)
 
+        model_io.update_latest_pointers(run_dir, global_pointer=cfg.get("last_run_pointer"))
+
         logger.info(result.summary())
         logger.info(f"training: run_id={run.info.run_id}, model_uri={model_info.model_uri}, study={study_name}")
 

@@ -6,6 +6,9 @@ import skops.io as sio
 from typing import Mapping
 import json
 from importlib.metadata import version
+import os
+import tempfile
+
 
 DEFAULT_MODEL_FILENAME = "model.skops"
 
@@ -117,3 +120,33 @@ def save_run_pointer(run_dir: Path, *, run_id: str, model_uri: str,
 def read_run_pointer(run_dir: Path):
     path = Path(run_dir) / "mlflow_run.json"
     return json.loads(path.read_text()) if path.exists() else {}
+
+
+def _atomic_write_text(path: Path, text: str) -> Path:
+    """
+    Write via temp-file + os.replace so a crash mid-write never leaves a
+    half-written pointer
+    """
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=".tmp_", suffix=path.suffix)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(text)
+        os.replace(tmp, path)
+    except BaseException:
+        Path(tmp).unlink(missing_ok=True)
+        raise
+    return path
+
+
+def update_latest_pointers(run_dir: Path, *, global_pointer: str | Path | None = None) -> None:
+    """Publish stable 'latest run' pointers so Make/CI/evaluate can find the newest
+    run
+    - global: the explicit `global_pointer` path — 'latest run overall'.
+    """
+    run_dir = Path(run_dir)
+    line = run_dir.as_posix() + "\n"
+    _atomic_write_text(run_dir.parent / "last_run.txt", line)
+    if global_pointer:
+        _atomic_write_text(Path(global_pointer), line)
