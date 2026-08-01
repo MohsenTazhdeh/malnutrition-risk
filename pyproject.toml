@@ -17,11 +17,14 @@ dependencies = [
     "lightgbm>=4.7,<4.8",
     "pyarrow>=21",
     "shap>=0.46",
+    "skops>=0.14.0",
     "matplotlib==3.9.2",
 ]
 [project.optional-dependencies]
 postgres = ["psycopg2-binary"]
-dev = ["pytest", "ruff"]
+
+[dependency-groups]
+dev = ["pytest", "ruff", "optuna-dashboard"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
